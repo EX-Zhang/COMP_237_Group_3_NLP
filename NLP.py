@@ -27,6 +27,10 @@ Shakira_df = pd.read_csv("Youtube05-Shakira.csv")
 
 df_frames = pd.concat([Psy_df, KatyPerry_df, LMFAO_df, Eminem_df, Shakira_df]).sample(frac=1.0)
 
+print("Basic Data Exploration:\n")
+
+print(df_frames.info(),"\n",df_frames.describe(),"\n\nShape: ",df_frames.shape,"\n")
+
 df_x = df_frames["CONTENT"]
 
 df_y = df_frames["CLASS"]
@@ -47,7 +51,7 @@ cv_test_x = count_vectorizer.transform(df_test_x)
 
 cv_x = count_vectorizer.transform(df_x)
 
-print("Shape of data after vectorized: ", cv_x.shape, cv_train_x.shape, cv_test_x.shape, "\n")
+print("Shape of data after vectorized (Total, Train, Test): ", cv_x.shape, cv_train_x.shape, cv_test_x.shape, "\n")
 
 # Downscale the transformed data using tf-idf
 
@@ -59,7 +63,7 @@ tfidf_test_x = tfidf.transform(cv_test_x)
 
 tfidf_x = tfidf.transform(cv_x)
 
-print("Shape of data after downscaled using tf-idf: ", tfidf_x.shape, tfidf_train_x.shape, tfidf_test_x.shape, "\n")
+print("Shape of data after downscaled using tf-idf (Total, Train, Test): ", tfidf_x.shape, tfidf_train_x.shape, tfidf_test_x.shape, "\n")
 
 # Fit the training data into a Naive Bayes classifier
 
