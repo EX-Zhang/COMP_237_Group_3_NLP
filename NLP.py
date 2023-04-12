@@ -1,9 +1,7 @@
 
 import pandas as pd
 
-import nltk, math
-
-from sklearn.datasets import fetch_20newsgroups
+import nltk, math, string, re
 
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
@@ -11,27 +9,42 @@ from sklearn.naive_bayes import MultinomialNB
 
 from sklearn.model_selection import cross_val_score
 
-from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+
+def comment_preprocessing(comment):
+
+    html_cleaner = re.compile('<a.*?</a>|<br />|<i>.*?</i>|<span class=.*</span>') # regex to match html elements
+
+    comment = re.sub(html_cleaner,'',comment) # replace html elements
+
+    comment = "".join([word for word in comment if word in string.printable]) # remove none ascii characters
+
+    comment = comment.lower()  # to lower case
+
+    comment = "".join([word for word in comment if word not in string.punctuation])  # remove punctuations
+
+    tokens = [word for word in comment.split() if word not in nltk.corpus.stopwords.words("english")]  # remove stopwords
+
+    wnl = nltk.WordNetLemmatizer()
+
+    preprocessed_comment = ' '.join([wnl.lemmatize(token) for token in tokens]) # lemmatize the words
+
+    return preprocessed_comment
 
 # Load Data
 
-Psy_df = pd.read_csv("Youtube01-Psy.csv")
-
-KatyPerry_df = pd.read_csv("Youtube02-KatyPerry.csv")
-
 LMFAO_df = pd.read_csv("Youtube03-LMFAO.csv")
 
-Eminem_df = pd.read_csv("Youtube04-Eminem.csv")
+print("Check if there is missing value:")
+print(LMFAO_df.isnull().isnull().sum(),"\n")
 
-Shakira_df = pd.read_csv("Youtube05-Shakira.csv") 
-
-df_frames = pd.concat([Psy_df, KatyPerry_df, LMFAO_df, Eminem_df, Shakira_df]).sample(frac=1.0)
+df_frames = LMFAO_df[["CONTENT","CLASS"]].sample(frac=1.0)
 
 print("Basic Data Exploration:\n")
 
-print(df_frames.info(),"\n",df_frames.describe(),"\n\nShape: ",df_frames.shape,"\n")
+print(df_frames.info(),"\n\n",df_frames.describe(),"\n\nShape: ",df_frames.shape,"\n")
 
-df_x = df_frames["CONTENT"]
+df_x = [comment_preprocessing(comment) for comment in df_frames["CONTENT"]]
 
 df_y = df_frames["CLASS"]
 
@@ -51,7 +64,7 @@ cv_test_x = count_vectorizer.transform(df_test_x)
 
 cv_x = count_vectorizer.transform(df_x)
 
-print("Shape of data after vectorized (Total, Train, Test): ", cv_x.shape, cv_train_x.shape, cv_test_x.shape, "\n")
+print("Shape of data after vectorized: ", cv_x.shape, "\n")
 
 # Downscale the transformed data using tf-idf
 
@@ -63,7 +76,7 @@ tfidf_test_x = tfidf.transform(cv_test_x)
 
 tfidf_x = tfidf.transform(cv_x)
 
-print("Shape of data after downscaled using tf-idf (Total, Train, Test): ", tfidf_x.shape, tfidf_train_x.shape, tfidf_test_x.shape, "\n")
+print("Shape of data after downscaled using tf-idf: ", tfidf_x.shape, "\n")
 
 # Fit the training data into a Naive Bayes classifier
 
@@ -73,14 +86,12 @@ classifier.fit(tfidf_train_x,df_train_y)
 # Cross Validation
 
 cv_accuracy = cross_val_score(classifier,tfidf_x,df_y,scoring='accuracy',cv=5)
-print("Mean Result of Model Accuracy: " + str(round(100*cv_accuracy.mean(), 2)) + "%")
+print("Mean Result of Model Accuracy: " + str(round(100*cv_accuracy.mean(), 2)) + "%\n")
 
 # Predict the test data
 
 pred_y = classifier.predict(tfidf_test_x)
 
-pred_y_flag = pred_y[:] > 0.75
-
-print("Confusion Matrix:\n",confusion_matrix(df_test_y,pred_y_flag))
+print("Confusion Matrix:\n",confusion_matrix(df_test_y,pred_y),"\n")
 
 print("Accuracy of Model: ", classifier.score(tfidf_test_x, df_test_y))
