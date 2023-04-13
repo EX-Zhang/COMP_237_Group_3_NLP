@@ -94,4 +94,25 @@ pred_y = classifier.predict(tfidf_test_x)
 
 print("Confusion Matrix:\n",confusion_matrix(df_test_y,pred_y),"\n")
 
-print("Accuracy of Model: ", classifier.score(tfidf_test_x, df_test_y))
+print("Accuracy of Model: ", classifier.score(tfidf_test_x, df_test_y),"\n")
+
+comments = [ "90 Million views and still going :)",
+             "This song is almost 11 years old and it's still incredible",
+             "This video's 11th anniversary is today!",
+             "I just love David Malan’s teaching style. He’s soooo my favorite professor for CS! How does he make complex topics so easy to understand? Amazing!",
+             "Hey, check out my new website!! This site is about kids stuff.kidsmediausa.com",
+             "watch?v=vtaRGgvGtWQ Check this out."]
+
+comments_class = [0,0,0,0,1,1]
+
+comments_preprocessed = [comment_preprocessing(comment) for comment in comments]
+
+comments_cv = count_vectorizer.transform(comments_preprocessed)
+
+comments_tfidf = tfidf.transform(comments_cv)
+
+comments_pred = classifier.predict(comments_tfidf)
+
+for i in range(6):
+
+    print(comments[i]," Class: ",comments_class[i]," Predict: ",comments_pred[i],"\n")
